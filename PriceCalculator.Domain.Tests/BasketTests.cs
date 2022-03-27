@@ -42,6 +42,19 @@ namespace PriceCalculator.Domain.Tests
 
             Assert.That(total, Is.EqualTo(3.10m));
         }
+
+        // Given the basket has 4 milk when I total the basket then the total should be £3.45
+        [Test]
+        public void Applies_buy_three_milk_get_one_free_offer()
+        {
+            var offer = new Offer(4, _milk, 0m, _milk);
+            var basket = new Basket(offer);
+            basket.Add(_milk.Copy(), _milk.Copy(), _milk.Copy(), _milk.Copy());
+
+            var total = basket.Total();
+
+            Assert.That(total, Is.EqualTo(3.45m));
+        }
     }
 
 /*
@@ -55,7 +68,6 @@ namespace PriceCalculator.Domain.Tests
     • Buy 3 Milk and get the 4th milk for free
 
     Scenarios
-    • Given the basket has 4 milk when I total the basket then the total should be £3.45
     • Given the basket has 2 butter, 1 bread and 8 milk when I total the basket then the total should be £9.00
 
     - There is no scenario given that prevents a product from being reduced twice.
