@@ -1,9 +1,27 @@
+using System.Collections.Generic;
+using System.Linq;
+
 namespace PriceCalculator.Domain
 {
     public class Basket
     {
-        public void Add(params decimal[] products) { }
+        private IEnumerable<Product> _products;
+        private readonly Offer _offer;
 
-        public decimal Total() => 2.95m;
+        public Basket() { }
+
+        public Basket(Offer offer)
+        {
+            _offer = offer;
+        }
+
+        public void Add(params Product[] products) => _products = products;
+
+        public decimal Total()
+        {
+            _offer?.ApplyDiscount(_products);
+
+            return _products.Aggregate(0m, (runningTotal, product) => runningTotal + product.GetCost());
+        }
     }
 }
