@@ -1,27 +1,33 @@
 using System.Collections.Generic;
 using System.Linq;
+using PriceCalculator.Domain.Products;
 
 namespace PriceCalculator.Domain
 {
     public class Basket
     {
-        private IEnumerable<Product> _products;
-        private readonly Offer _offer;
+        private readonly OfferService _offerService;
 
-        public Basket() { }
+        private IEnumerable<Product> _contents = new Product[]{ };
 
-        public Basket(Offer offer)
+        public Basket(OfferService offerService)
         {
-            _offer = offer;
+            _offerService = offerService;
         }
 
-        public void Add(params Product[] products) => _products = products;
+        public void Add(params Product[] newProducts) =>
+            _contents = _contents.Concat(newProducts);
+
+        public void Add(Product product, int count) =>
+            Add(Enumerable.Repeat(product, count).ToArray());
 
         public decimal Total()
         {
-            _offer?.ApplyDiscount(_products);
+            _offerService.ApplyOffers(this);
 
-            return _products.Aggregate(0m, (runningTotal, product) => runningTotal + product.GetCost());
+            return _contents.Aggregate(0m, (runningTotal, product) => runningTotal + product.GetCost());
         }
+
+        internal void Apply(Offer offer) => _contents = offer.ApplyTo(_contents);
     }
 }

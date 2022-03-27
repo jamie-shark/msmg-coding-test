@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using PriceCalculator.Domain.Products;
 
 namespace PriceCalculator.Domain
 {
@@ -18,12 +19,39 @@ namespace PriceCalculator.Domain
             _discountedProduct = discountedProduct;
         }
 
-        internal void ApplyDiscount(IEnumerable<Product> productsToDiscount)
+        private bool IsApplicable(IEnumerable<Product> products) =>
+            products.Count(x => x.CanBeUsedInOffers() && x.Matches(_criteria)) >= _count &&
+            products.Any(x => x.CanBeUsedInOffers() && x.Matches(_discountedProduct));
+
+        internal IEnumerable<Product> ApplyTo(IEnumerable<Product> products)
         {
-            if (productsToDiscount.Count(x => x.Matches(_criteria)) == _count)
-                productsToDiscount
-                    .FirstOrDefault(x => x.Matches(_discountedProduct))
-                    ?.Discount(_discount);
+            if (!IsApplicable(products)) return products;
+
+            var hasDiscountBeenApplied = false;
+            var numberOfCriteriaProductsUsed = 0;
+            var result = new List<Product>();
+
+            foreach (var product in products)
+            {
+                if (!hasDiscountBeenApplied && product.CanBeUsedInOffers() && _discountedProduct.Matches(product))
+                {
+                    hasDiscountBeenApplied = true;
+                    result.Add(new DiscountedProduct(product, _discount));
+                }
+                else if (numberOfCriteriaProductsUsed < _count && product.CanBeUsedInOffers() && _criteria.Matches(product))
+                {
+                    numberOfCriteriaProductsUsed++;
+                    result.Add(new UsedInOfferProduct(product));
+                }
+                else
+                {
+                    result.Add(product);
+                }
+            }
+
+            return IsApplicable(result)
+                ? ApplyTo(result)
+                : result;
         }
     }
 }
